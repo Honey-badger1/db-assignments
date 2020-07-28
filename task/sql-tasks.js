@@ -437,7 +437,7 @@ async function task_1_19(db) {
     JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
     GROUP BY Customers.CustomerID
     HAVING SUM(OrderDetails.UnitPrice*OrderDetails.Quantity)>10000
-    ORDER By SUM(OrderDetails.UnitPrice*OrderDetails.Quantity) DESC, CuStomers.CustomerID
+    ORDER By SUM(OrderDetails.UnitPrice*OrderDetails.Quantity) DESC, Customers.CustomerID
 
     
   
@@ -502,17 +502,15 @@ return result[0];
  */
 async function task_1_22(db) {
     let result = await db.query(`
-    SELECT 	DISTINCT A.CompanyName, A.PricePerItem, A.ProductName FROM( SELECT
-        Customers.CompanyName AS CompanyName,  CAST(OrderDetails.UnitPrice AS SIGNED) AS "PricePerItem", Products.ProductName
+    SELECT DISTINCT A.CompanyName, A.PricePerItem, A.ProductName FROM( SELECT
+      Customers.CompanyName AS CompanyName,  CAST(OrderDetails.UnitPrice AS SIGNED) AS "PricePerItem", Products.ProductName
        FROM Customers JOIN Orders ON Customers.CustomerID=Orders.CustomerID
        JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
-       JOIN Products ON OrderDetails.ProductID=Products.ProductID 
-       ORDER BY CompanyName, CAST(OrderDetails.UnitPrice AS SIGNED) DESC) As A 
-       JOIN(SELECT B.CompanyName, B.PricePerItem, B.ProductName FROM(SELECT
-        Customers.CompanyName AS CompanyName,  MAX(CAST(OrderDetails.UnitPrice AS SIGNED)) AS "PricePerItem", Products.ProductName
+       JOIN Products ON OrderDetails.ProductID=Products.ProductID ) As A 
+       JOIN(SELECT B.CompanyName, B.PricePerItem FROM(SELECT
+        Customers.CompanyName AS CompanyName,  MAX(CAST(OrderDetails.UnitPrice AS SIGNED)) AS "PricePerItem"
        FROM Customers JOIN Orders ON Customers.CustomerID=Orders.CustomerID
        JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
-       JOIN Products ON OrderDetails.ProductID=Products.ProductID
        GROUP by Customers.CompanyName )AS B) B ON
        A.CompanyName=B.CompanyName AND A.PricePerItem=B.PricePerItem 
        ORDER BY A.PricePerItem DESC, A.CompanyName, A.ProductName 
