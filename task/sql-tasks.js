@@ -515,7 +515,7 @@ async function task_1_22(db) {
       INNER JOIN Orders ON B.CustomerID=Orders.CustomerID
       INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
       WHERE A.CustomerID=B.CustomerID)
-      ORDER BY OrderDetails.UnitPrice DESC, A.CompanyName, Products.ProductName 
+      ORDER BY \`PricePerItem\` DESC, A.CompanyName, Products.ProductName 
        
        
        
