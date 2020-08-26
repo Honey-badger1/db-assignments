@@ -480,7 +480,7 @@ async function task_1_21(db) {
     let result = await db.query(`
     SELECT
     OrderID,
-      CAST(SUM(UnitPrice*Quantity) AS SIGNED) AS  "Maximum Purchase Amount, $" 
+      CAST(SUM(UnitPrice*Quantity) AS SIGNED) AS "Maximum Purchase Amount, $" 
     FROM OrderDetails
     GROUP BY OrderID
     ORDER BY \`Maximum Purchase Amount, $\` DESC
