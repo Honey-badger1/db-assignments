@@ -47,7 +47,7 @@ async function task_1_2(db) {
     SELECT
       OrderID AS "Order Id",
       CAST(SUM(UnitPrice*Quantity) AS SIGNED) AS  "Order Total Price" ,
-      ROUND(Sum(Discount*Quantity)/SUM(UnitPrice*Quantity)*100,3) AS "Total Order Discount, %"
+      ROUND(SUM(Discount*Quantity)/SUM(UnitPrice*Quantity)*100,3) AS "Total Order Discount, %"
     FROM OrderDetails
     GROUP BY OrderID
     ORDER BY OrderID DESC
@@ -93,8 +93,7 @@ async function task_1_4(db) {
       Orders)*100),5) AS "% of all orders"
     FROM Orders
     GROUP BY CustomerID 
-    ORDER BY   COUNT(OrderID)/(SELECT Count(OrderID) FROM 
-   Orders)*100  DESC, CustomerID  
+    ORDER BY \`% of all orders\` DESC, CustomerID  
 `);
 
 return result[0];
@@ -113,8 +112,8 @@ async function task_1_5(db) {
       ProductID AS "ProductId",
       ProductName, QuantityPerUnit
     FROM Products
-    WHERE LOWER(LEFT(ProductName, 1)) IN ('a', 'b', 'c', 'd', 'e','f')
-    ORDER by ProductName
+    WHERE ProductName REGEXP '^[A-F]'
+    ORDER BY ProductName
 `);
 
 return result[0];
@@ -135,9 +134,9 @@ async function task_1_6(db) {
       Products.ProductName, 
       Suppliers.CompanyName AS SupplierCompanyName, 
       Categories.CategoryName 
-    FROM Products  JOIN Suppliers ON
+    FROM Products INNER JOIN Suppliers ON
     Products.SupplierID=Suppliers.SupplierID
-    JOIN Categories ON Products.CategoryID=Categories.CategoryID
+    INNER JOIN Categories ON Products.CategoryID=Categories.CategoryID
     ORDER BY ProductName, SupplierCompanyName
 `);
 
@@ -157,12 +156,10 @@ return result[0];
 async function task_1_7(db) {
     let result = await db.query(`
     SELECT 
-    DISTINCT A.EmployeeID as "EmployeeId", CONCAT(A.FirstName, ' ', A.LastName) AS "FullName",
-    CASE  WHEN A.ReportsTo IS NULL THEN '-'
-    ELSE CONCAT(B.FirstName, ' ', B.LastName)  END AS ReportsTo 
-    FROM Employees A, Employees  B
-    WHERE A.EmployeeID <> B.EmployeeID
-    AND (A.ReportsTo = B.EmployeeID OR A.ReportsTo IS NULL)
+      DISTINCT A.EmployeeID as "EmployeeId", CONCAT(A.FirstName, ' ', A.LastName) AS "FullName",
+      IFNULL(CONCAT(B.FirstName, ' ', B.LastName), '-') AS ReportsTo 
+    FROM Employees A
+    LEFT JOIN Employees B ON A.ReportsTo = B.EmployeeID 
     ORDER BY EmployeeID
 `);
 
@@ -183,7 +180,7 @@ async function task_1_8(db) {
       CategoryName,
       COUNT(ProductID) AS "TotalNumberOfProducts"
     FROM Categories
-    JOIN Products ON Categories.CategoryID=Products.CategoryID
+    INNER JOIN Products ON Categories.CategoryID=Products.CategoryID
     GROUP BY CategoryName
     ORDER BY CategoryName 
 `);
@@ -266,17 +263,17 @@ return result[0];
  */
 async function task_1_12(db) {
     let result = await db.query(`
-    SELECT  ProductName, 
-    UnitPrice FROM(
-    SELECT 
-    ProductName, 
-    UnitPrice
-    FROM Products
-    ORDER BY UnitPrice DESC, ProductName 
-    LIMIT 20) AS A
-    Order BY UnitPrice , ProductName 
-    
-  
+    SELECT  
+      ProductName, 
+      UnitPrice FROM
+        (SELECT 
+          ProductName, 
+          UnitPrice
+        FROM Products
+        ORDER BY UnitPrice DESC, ProductName 
+        LIMIT 20) AS A
+    ORDER BY UnitPrice, ProductName 
+     
 `);
 
 return result[0]; 
@@ -292,9 +289,9 @@ return result[0];
 async function task_1_13(db) {
         let result = await db.query(`
         SELECT 
-          SUM(CASE WHEN (Discontinued=0 OR Discontinued=1) THEN 1 ELSE 0 END) AS "TotalOfCurrentProducts",
-          SUM(CASE WHEN Discontinued=1  THEN 1 ELSE 0 END) AS "TotalOfDiscontinuedProducts"
-        FROM Products
+          (SELECT COUNT(*)FROM Products) AS "TotalOfCurrentProducts",
+          (SELECT COUNT(*)FROM Products WHERE Discontinued=1) AS "TotalOfDiscontinuedProducts"
+        
         
       
     `);
@@ -333,19 +330,19 @@ return result[0];
 async function task_1_15(db) {
     let result = await db.query(`
     SELECT
-      SUM(CASE WHEN OrderDate LIKE '1997-01%' THEN 1 ELSE 0 END) AS "January",
-      SUM(CASE WHEN OrderDate LIKE '1997-02%' THEN 1 ELSE 0 END) AS "February",
-      SUM(CASE WHEN OrderDate LIKE '1997-03%' THEN 1 ELSE 0 END) AS "March",
-      SUM(CASE WHEN OrderDate LIKE '1997-04%' THEN 1 ELSE 0 END) AS "April",
-      SUM(CASE WHEN OrderDate LIKE '1997-05%' THEN 1 ELSE 0 END) AS "May",
-      SUM(CASE WHEN OrderDate LIKE '1997-06%' THEN 1 ELSE 0 END) AS "June",
-      SUM(CASE WHEN OrderDate LIKE '1997-07%' THEN 1 ELSE 0 END) AS "July",
-      SUM(CASE WHEN OrderDate LIKE '1997-08%' THEN 1 ELSE 0 END) AS "August",
-      SUM(CASE WHEN OrderDate LIKE '1997-09%' THEN 1 ELSE 0 END) AS "September",
-      SUM(CASE WHEN OrderDate LIKE '1997-10%' THEN 1 ELSE 0 END) AS "October",
-      SUM(CASE WHEN OrderDate LIKE '1997-11%' THEN 1 ELSE 0 END) AS "November",
-      SUM(CASE WHEN OrderDate LIKE '1997-12%' THEN 1 ELSE 0 END) AS "December"
-    FROM Orders
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-01%') AS "January",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-02%') AS "February",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-03%') AS "March",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-04%') AS "April",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-05%') AS "May",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-06%') AS "June",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-07%') AS "July",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-08%') AS "August",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-09%') AS "September",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-10%') AS "October",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-11%') AS "November",
+      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-12%') AS "December"
+    
     
   
 `);
@@ -385,7 +382,8 @@ async function task_1_17(db) {
     let result = await db.query(`
     SELECT  
       Categories.CategoryName, AVG(Products.UnitPrice) AS "AvgPrice"
-    FROM Categories JOIN Products
+    FROM Categories 
+    INNER JOIN Products
     ON Categories.CategoryID=Products.CategoryID
     GROUP BY CategoryName
     ORDER BY AvgPrice DESC, CategoryName
@@ -409,7 +407,7 @@ async function task_1_18(db) {
     let result = await db.query(`
     SELECT
       DATE_FORMAT(OrderDate,'%Y-%m-%d %T') AS "OrderDate",
-      COUNT(OrderID)AS "Total Number of Orders"  FROM Orders
+      COUNT(OrderID) AS "Total Number of Orders" FROM Orders
     GROUP BY OrderDate
     HAVING OrderDate LIKE '1998%'
 
@@ -433,11 +431,11 @@ async function task_1_19(db) {
     SELECT  Customers.CustomerID,  Customers.CompanyName,
       SUM(OrderDetails.UnitPrice*OrderDetails.Quantity) AS "TotalOrdersAmount, $"
     FROM Customers
-    JOIN Orders ON Customers.CustomerID=Orders.CustomerID
-    JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
+    INNER JOIN Orders ON Customers.CustomerID=Orders.CustomerID
+    INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
     GROUP BY Customers.CustomerID
-    HAVING SUM(OrderDetails.UnitPrice*OrderDetails.Quantity)>10000
-    ORDER By SUM(OrderDetails.UnitPrice*OrderDetails.Quantity) DESC, Customers.CustomerID
+    HAVING \`TotalOrdersAmount, $\`>10000
+    ORDER BY \`TotalOrdersAmount, $\` DESC, Customers.CustomerID
 
     
   
@@ -464,7 +462,7 @@ async function task_1_20(db) {
     JOIN Orders ON Employees.EmployeeID=Orders.EmployeeID
     JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
     GROUP BY Employees.EmployeeID
-    ORDER BY SUM(OrderDetails.UnitPrice*OrderDetails.Quantity) DESC
+    ORDER BY \`Amount, $\` DESC
     LIMIT 1
   
 `);
@@ -482,10 +480,10 @@ async function task_1_21(db) {
     let result = await db.query(`
     SELECT
     OrderID,
-      CAST(Sum(UnitPrice*Quantity) AS SIGNED) AS  "Maximum Purchase Amount, $" 
+      CAST(SUM(UnitPrice*Quantity) AS SIGNED) AS  "Maximum Purchase Amount, $" 
     FROM OrderDetails
     GROUP BY OrderID
-    ORDER BY SUM(UnitPrice*Quantity) DESC
+    ORDER BY \`Maximum Purchase Amount, $\` DESC
     LIMIT 1
   
 `);
@@ -502,18 +500,22 @@ return result[0];
  */
 async function task_1_22(db) {
     let result = await db.query(`
-    SELECT DISTINCT A.CompanyName, A.PricePerItem, A.ProductName FROM( SELECT
-      Customers.CompanyName AS CompanyName,  CAST(OrderDetails.UnitPrice AS SIGNED) AS "PricePerItem", Products.ProductName
-       FROM Customers JOIN Orders ON Customers.CustomerID=Orders.CustomerID
-       JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
-       JOIN Products ON OrderDetails.ProductID=Products.ProductID ) As A 
-       JOIN(SELECT B.CompanyName, B.PricePerItem FROM(SELECT
-        Customers.CompanyName AS CompanyName,  MAX(CAST(OrderDetails.UnitPrice AS SIGNED)) AS "PricePerItem"
-       FROM Customers JOIN Orders ON Customers.CustomerID=Orders.CustomerID
-       JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
-       GROUP by Customers.CompanyName )AS B) B ON
-       A.CompanyName=B.CompanyName AND A.PricePerItem=B.PricePerItem 
-       ORDER BY A.PricePerItem DESC, A.CompanyName, A.ProductName 
+    SELECT DISTINCT 
+      A.CompanyName AS CompanyName,  
+      CAST(OrderDetails.UnitPrice AS SIGNED) AS "PricePerItem", 
+      Products.ProductName
+    FROM Customers A
+    INNER JOIN Orders ON A.CustomerID=Orders.CustomerID
+    INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
+    INNER JOIN Products ON OrderDetails.ProductID=Products.ProductID 
+    WHERE OrderDetails.UnitPrice =
+      (SELECT  
+        MAX(CAST(OrderDetails.UnitPrice AS SIGNED)) AS "PricePerItem"
+      FROM Customers B
+      INNER JOIN Orders ON B.CustomerID=Orders.CustomerID
+      INNER JOIN OrderDetails ON Orders.OrderID=OrderDetails.OrderID
+      WHERE A.CustomerID=B.CustomerID)
+      ORDER BY OrderDetails.UnitPrice DESC, A.CompanyName, Products.ProductName 
        
        
        
