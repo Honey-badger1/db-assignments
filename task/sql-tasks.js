@@ -330,18 +330,20 @@ return result[0];
 async function task_1_15(db) {
     let result = await db.query(`
     SELECT
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-01%') AS "January",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-02%') AS "February",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-03%') AS "March",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-04%') AS "April",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-05%') AS "May",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-06%') AS "June",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-07%') AS "July",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-08%') AS "August",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-09%') AS "September",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-10%') AS "October",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-11%') AS "November",
-      (SELECT COUNT(*) FROM Orders WHERE OrderDate LIKE '1997-12%') AS "December"
+      SUM(MONTH(OrderDate)=1) AS "January",
+      SUM(MONTH(OrderDate)=2) AS "February",
+      SUM(MONTH(OrderDate)=3) AS "March",
+      SUM(MONTH(OrderDate)=4) AS "April",
+      SUM(MONTH(OrderDate)=5) AS "May",
+      SUM(MONTH(OrderDate)=6) AS "June",
+      SUM(MONTH(OrderDate)=7) AS "July",
+      SUM(MONTH(OrderDate)=8) AS "August",
+      SUM(MONTH(OrderDate)=9) AS "September",
+      SUM(MONTH(OrderDate)=10) AS "October",
+      SUM(MONTH(OrderDate)=11) AS "November",
+      SUM(MONTH(OrderDate)=12) AS "December"
+      FROM Orders
+      WHERE YEAR(OrderDate)=1997
     
     
   
