@@ -289,30 +289,27 @@ async function task_3_1(db) {
                     value: "$criteria_value"
                 },
                 pipeline: [{
-                        $match: {
-                            "versions.initiativeId": ObjectId("58af4da0b310d92314627290")
-                        }
-                    },
-                    {
-                        $project: {
-                            _id: 0,
-                            value: 1,
-                            "versions.definition": 1,
-                            label: 1,
-                            definition: 1
-                        }
-                    },
-                    {
-                        $match: {
-                            $expr: {
-                                $and:
+                    $match: {
+                        "versions.initiativeId": ObjectId("58af4da0b310d92314627290"),
+                        $expr: 
+                            
 
-                                    [{
-                                        $eq: ["$value", "$$value"]
-                                    }]
-                            }
+                        {
+                            $eq: ["$value", "$$value"]
                         }
+                
                     }
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        value: 1,
+                        "versions.definition": 1,
+                        label: 1,
+                        definition: 1
+                    }
+                },
+                { $limit : 1 }
                 ],
 
 
